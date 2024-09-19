@@ -18,14 +18,13 @@ end
 The allocator saves memory for thousands of objects at a time, with few allocations.
 
 ### Initialization
-We must have defined a `Base.zero` function for our customer type, for instance as follows
+We must have defined a function that constructs an empty object, for instance as follows
 ```julia
-import Base.zero
-zero(MyStruct) = MyStruct(0, 'a')
+MyStruct() = MyStruct(0, 'a')
 ```
 Now, we can create an allocator for pointers of objects of our custom type
 ```julia
-alloc = allocator(MyStruct)
+alloc = allocator(MyStruct, () -> MyStruct())
 ```
 ### Create a new object and return its pointer
 To create a new object and return its pointer, we use the method `new_ptr!`
@@ -67,23 +66,37 @@ empty!(alloc)
 ## Benchmarking
 We have 
 ```julia
-using BenchmarkTools
-alloc = allocator(MyStruct)
-const MyStructPtr = Ptr{MyStruct}
+struct MyStruct
+    x::Int64
+    y::Char
+end
 
-function test_alloc(n)
+const MyStructPtr = JAPtr{MyStruct}
+
+import Base.copy!
+import Base.zero
+
+function Base.copy!(dst::MyStruct, src::MyStruct)
+    dst.x = src.x
+    dst.y = src.y
+    return dst
+end
+
+MyStruct() = MyStruct(0, 'A')
+MyStructPtr() = MyStructPtr(MyStruct(), (0, 0))
+
+function test_alloc(n, alloc)
     empty!(alloc)
     vec = MyStructPtr[]
     for _ in 1:n
-        l = new_label!(alloc)
+        l = new_ptr!(alloc)
         push!(vec, l)
     end
     for _ in 1:n
-        delete_label!(alloc, vec[end])
-        pop!(vec)
+        delete_ptr!(alloc, pop!(vec))
     end
     for _ in 1:n
-        l = new_label!(alloc)
+        l = new_ptr!(alloc)
         push!(vec, l)
     end
 end
@@ -91,18 +104,20 @@ end
 function test_base(n)
     vec = MyStructPtr[]
     for _ in 1:n
-        l = zero(MyStructPtr)
+        l = MyStructPtr()
         push!(vec, l)
     end
     for _ in 1:n
         pop!(vec)
     end
     for _ in 1:n
-        l = zero(MyStructPtr)
+        l = MyStructPtr()
         push!(vec, l)
     end
 end
 
-@benchmark test_base(10000)
-@benchmark test_alloc(10000)
+alloc = allocator(MyStruct, () -> MyStruct())
+
+@benchmark test_base(1000)
+@benchmark test_alloc(1000, alloc)
 ```
