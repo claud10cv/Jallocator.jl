@@ -51,3 +51,19 @@ function Base.empty!(alloc::Allocator{T})::Allocator{T} where T
     alloc.curr = 1
     return alloc
 end
+
+function isnull(p::JAPtr{T})::Bool where T
+    return p.addr == nulladdr()
+end
+
+function isnull(addr::JAAddr)::Bool
+    return addr == nulladdr()
+end
+
+function get_object(p::JAPtr{T})::T where T
+    return p.obj
+end
+
+function get_address(p::JAPtr{T})::JAAddr where T
+    return p.addr
+end
