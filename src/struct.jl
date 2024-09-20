@@ -6,13 +6,13 @@ const JAAddr = Tuple{Int64, Int64}
      
 mutable struct JAPtr{T}
     obj::T
-    ptr::JAAddr
+    addr::JAAddr
 end
 
 JAPtrVector{T} = StaticVector{LVSIZE, JAPtr{T}}
 
 mutable struct Allocator{T}
-    f::Function
+    default::Function
     mem::Vector{JAPtrVector{T}}
     curr::Int64
     trash::Vector{JAAddr}

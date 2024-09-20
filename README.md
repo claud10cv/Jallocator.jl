@@ -41,6 +41,13 @@ To access the object itself for a given pointer `ptr`, we do
 ```julia
 s = ptr.obj
 ```
+It is also possible to get the pointer given its address, as follows
+```julia
+p = new_Label!(alloc)
+q = get_pointer(alloc, p.addr)
+p == q # returns true, they are the same object
+```
+
 ### Copying an object
 To create a copy of an object pointing to `ptr`, we first must make sure that `MyStruct` admits copying, for instance by declaring a copy function
 ```julia

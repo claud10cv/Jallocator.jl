@@ -3,7 +3,7 @@ function allocator(::Type{T}, f::Function)::Allocator{T} where T
     return alloc
 end
 
-zeroPtr(alloc::Allocator{T}) where T = JAPtr{T}(alloc.f(), (0, 0))
+zeroPtr(alloc::Allocator{T}) where T = JAPtr{T}(alloc.default(), (0, 0))
 zeroVector(alloc::Allocator{T}) where T = StrideArray(x -> zeroPtr(alloc), JAPtr{T}, StaticInt(LVSIZE))
 
 function new_ptr!(alloc::Allocator{T})::JAPtr{T} where T
@@ -16,13 +16,13 @@ function new_ptr!(alloc::Allocator{T})::JAPtr{T} where T
         alloc.curr = 1
     end
     newlabelptr = alloc.mem[end][alloc.curr]
-    newlabelptr.ptr = (length(alloc.mem), alloc.curr)
+    newlabelptr.addr = (length(alloc.mem), alloc.curr)
     alloc.curr = (alloc.curr + 1) % (LVSIZE + 1)
     return newlabelptr
 end
 
 function delete_ptr!(alloc::Allocator{T}, lptr::JAPtr{T})::Nothing where T
-    push!(alloc.trash, lptr.ptr)
+    push!(alloc.trash, lptr.addr)
     return
 end
 
@@ -34,6 +34,10 @@ function copy_ptr!(alloc::Allocator{T}, l::T)::JAPtr{T} where T
     nlptr = new_ptr!(alloc)
     copy!(nlptr.obj, l)
     return nlptr
+end
+
+function get_pointer(alloc::Allocator{T}, addr::JAAddr) where T
+    return alloc.mem[addr[1]][addr[2]]
 end
 
 function Base.empty!(alloc::Allocator{T})::Allocator{T} where T
