@@ -66,6 +66,10 @@ empty!(alloc)
 ## Benchmarking
 We have 
 ```julia
+using Jallocator
+using BenchmarkTools
+using Random
+
 struct MyStruct
     x::Int64
     y::Char
@@ -88,36 +92,58 @@ MyStructPtr() = MyStructPtr(MyStruct(), (0, 0))
 function test_alloc(n, alloc)
     empty!(alloc)
     vec = MyStructPtr[]
+    rng = MersenneTwister(0)
     for _ in 1:n
-        l = new_ptr!(alloc)
-        push!(vec, l)
-    end
-    for _ in 1:n
-        delete_ptr!(alloc, pop!(vec))
-    end
-    for _ in 1:n
-        l = new_ptr!(alloc)
-        push!(vec, l)
+        t = rand(rng)
+        if t > 0.1
+            l = new_ptr!(alloc)
+            push!(vec, l)
+        elseif !isempty(vec)
+            delete_ptr!(alloc, pop!(vec))
+        end
     end
 end
 
 function test_base(n)
     vec = MyStructPtr[]
+    rng = MersenneTwister(0)
     for _ in 1:n
-        l = MyStructPtr()
-        push!(vec, l)
-    end
-    for _ in 1:n
-        pop!(vec)
-    end
-    for _ in 1:n
-        l = MyStructPtr()
-        push!(vec, l)
+        t = rand(rng)
+        if t > 0.1
+            l = MyStructPtr()
+            push!(vec, l)
+        elseif !isempty(vec)
+            pop!(vec)
+        end
     end
 end
 
 alloc = allocator(MyStruct, () -> MyStruct())
 
-@benchmark test_base(1000)
-@benchmark test_alloc(1000, alloc)
+@benchmark test_base(10000)
+
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range (min … max):  135.024 μs …  19.042 ms  ┊ GC (min … max):  0.00% … 97.38%
+ Time  (median):     152.798 μs               ┊ GC (median):     0.00%
+ Time  (mean ± σ):   215.713 μs ± 393.637 μs  ┊ GC (mean ± σ):  13.46% ±  9.42%
+
+  █▄▂▃▄▄▁  ▂▁                                                   ▁
+  ███████▆████▄▁▃▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃▃▁▃▄▄▅ █
+  135 μs        Histogram: log(frequency) by time       2.13 ms <
+
+ Memory estimate: 561.25 KiB, allocs estimate: 8990.
+
+@benchmark test_alloc(10000, alloc)
+
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range (min … max):  130.720 μs …   8.204 ms  ┊ GC (min … max): 0.00% … 39.52%
+ Time  (median):     147.744 μs               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   155.248 μs ± 111.601 μs  ┊ GC (mean ± σ):  2.49% ±  4.63%
+
+  ▃▄▂▂▂▁▁▇▇▅▅██▆▆▆▅▄▃▂▂▂▁▁                                      ▂
+  ██████████████████████████▇▇▆▅▄▆▅▆▆▇▆▆▆▇██▇████▇▆▇▆▇▅▆▅▆▅▆▄▆▅ █
+  131 μs        Histogram: log(frequency) by time        218 μs <
+
+ Memory estimate: 141.44 KiB, allocs estimate: 34.
+
 ```
