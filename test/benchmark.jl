@@ -1,5 +1,6 @@
 using Jallocator
 using BenchmarkTools
+using Random
 
 struct MyStruct
     x::Int64
@@ -23,36 +24,33 @@ MyStructPtr() = MyStructPtr(MyStruct(), (0, 0))
 function test_alloc(n, alloc)
     empty!(alloc)
     vec = MyStructPtr[]
+    rng = MersenneTwister(0)
     for _ in 1:n
-        l = new_ptr!(alloc)
-        push!(vec, l)
-    end
-    for _ in 1:n
-        delete_ptr!(alloc, pop!(vec))
-    end
-    for _ in 1:n
-        l = new_ptr!(alloc)
-        push!(vec, l)
+        t = rand(rng)
+        if t > 0.1
+            l = new_ptr!(alloc)
+            push!(vec, l)
+        elseif !isempty(vec)
+            delete_ptr!(alloc, pop!(vec))
+        end
     end
 end
 
 function test_base(n)
     vec = MyStructPtr[]
+    rng = MersenneTwister(0)
     for _ in 1:n
-        l = MyStructPtr()
-        push!(vec, l)
-    end
-    for _ in 1:n
-        pop!(vec)
-    end
-    for _ in 1:n
-        l = MyStructPtr()
-        push!(vec, l)
+        t = rand(rng)
+        if t > 0.1
+            l = MyStructPtr()
+            push!(vec, l)
+        elseif !isempty(vec)
+            pop!(vec)
+        end
     end
 end
 
 alloc = allocator(MyStruct, () -> MyStruct())
 
 @benchmark test_base(1000)
-println("between tests")
 @benchmark test_alloc(1000, alloc)

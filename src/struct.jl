@@ -2,9 +2,11 @@ StaticVector{N, T} = StrideArraysCore.StaticStrideArray{T, 1, (1,), Tuple{Static
 
 const LVSIZE = 8192
 
+const JAAddr = Tuple{Int64, Int64}
+     
 mutable struct JAPtr{T}
     obj::T
-    ptr::Tuple{Int64, Int64}
+    ptr::JAAddr
 end
 
 JAPtrVector{T} = StaticVector{LVSIZE, JAPtr{T}}
@@ -13,5 +15,5 @@ mutable struct Allocator{T}
     f::Function
     mem::Vector{JAPtrVector{T}}
     curr::Int64
-    trash::Vector{Tuple{Int64, Int64}}
+    trash::Vector{JAAddr}
 end

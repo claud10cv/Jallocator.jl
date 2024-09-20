@@ -1,5 +1,5 @@
 function allocator(::Type{T}, f::Function)::Allocator{T} where T
-    alloc = Allocator{T}(f, JAPtrVector{T}[], 0, Tuple{Int64, Int64}[])
+    alloc = Allocator{T}(f, JAPtrVector{T}[], 0, JAAddr[])
     return alloc
 end
 
