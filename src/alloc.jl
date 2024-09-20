@@ -36,7 +36,7 @@ function copy_ptr!(alloc::Allocator{T}, l::T)::JAPtr{T} where T
     return nlptr
 end
 
-function get_pointer(alloc::Allocator{T}, addr::JAAddr) where T
+function get_pointer(alloc::Allocator{T}, addr::JAAddr)::JAPtr{T} where T
     return alloc.mem[addr[1]][addr[2]]
 end
 

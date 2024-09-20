@@ -2,7 +2,7 @@ StaticVector{N, T} = StrideArraysCore.StaticStrideArray{T, 1, (1,), Tuple{Static
 
 const LVSIZE = 8192
 
-const JAAddr = Tuple{Int64, Int64}
+const JAAddr = Tuple{UInt32, UInt16}
      
 mutable struct JAPtr{T}
     obj::T

@@ -71,13 +71,13 @@ empty!(alloc)
 ```
 
 ## Benchmarking
-We have 
+The following benchmarks gives a hint about the performance of the data structures
 ```julia
 using Jallocator
 using BenchmarkTools
 using Random
 
-struct MyStruct
+mutable struct MyStruct
     x::Int64
     y::Char
 end
@@ -102,9 +102,12 @@ function test_alloc(n, alloc)
     rng = MersenneTwister(0)
     for _ in 1:n
         t = rand(rng)
-        if t > 0.1
+        if t > 2//3
             l = new_ptr!(alloc)
             push!(vec, l)
+        elseif t > 1//3
+            l = new_ptr!(alloc)
+            delete_ptr!(alloc, l)     
         elseif !isempty(vec)
             delete_ptr!(alloc, pop!(vec))
         end
@@ -116,9 +119,11 @@ function test_base(n)
     rng = MersenneTwister(0)
     for _ in 1:n
         t = rand(rng)
-        if t > 0.1
+        if t > 2//3
             l = MyStructPtr()
             push!(vec, l)
+        elseif t > 1//3
+            l = MyStructPtr()
         elseif !isempty(vec)
             pop!(vec)
         end
@@ -127,30 +132,29 @@ end
 
 alloc = allocator(MyStruct, () -> MyStruct())
 
-@benchmark test_base(10000)
+julia> @benchmark test_base(10000000)
 
-BenchmarkTools.Trial: 10000 samples with 1 evaluation.
- Range (min … max):  135.024 μs …  19.042 ms  ┊ GC (min … max):  0.00% … 97.38%
- Time  (median):     152.798 μs               ┊ GC (median):     0.00%
- Time  (mean ± σ):   215.713 μs ± 393.637 μs  ┊ GC (mean ± σ):  13.46% ±  9.42%
+BenchmarkTools.Trial: 9 samples with 1 evaluation.
+ Range (min … max):  555.411 ms … 746.736 ms  ┊ GC (min … max): 2.41% … 1.69%
+ Time  (median):     568.007 ms               ┊ GC (median):    2.23%
+ Time  (mean ± σ):   586.083 ms ±  60.641 ms  ┊ GC (mean ± σ):  1.89% ± 0.64%
 
-  █▄▂▃▄▄▁  ▂▁                                                   ▁
-  ███████▆████▄▁▃▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃▃▁▃▄▄▅ █
-  135 μs        Histogram: log(frequency) by time       2.13 ms <
+  ▁█ ▁█▁▁                                                     ▁  
+  ██▁████▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  555 ms           Histogram: frequency by time          747 ms <
 
- Memory estimate: 561.25 KiB, allocs estimate: 8990.
+ Memory estimate: 101.93 MiB, allocs estimate: 3335683.
 
-@benchmark test_alloc(10000, alloc)
+julia> @benchmark test_alloc(10000000, alloc)
 
-BenchmarkTools.Trial: 10000 samples with 1 evaluation.
- Range (min … max):  130.720 μs …   8.204 ms  ┊ GC (min … max): 0.00% … 39.52%
- Time  (median):     147.744 μs               ┊ GC (median):    0.00%
- Time  (mean ± σ):   155.248 μs ± 111.601 μs  ┊ GC (mean ± σ):  2.49% ±  4.63%
+BenchmarkTools.Trial: 10 samples with 1 evaluation.
+ Range (min … max):  491.019 ms … 544.360 ms  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     501.598 ms               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   508.871 ms ±  17.521 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%
 
-  ▃▄▂▂▂▁▁▇▇▅▅██▆▆▆▅▄▃▂▂▂▁▁                                      ▂
-  ██████████████████████████▇▇▆▅▄▆▅▆▆▇▆▆▆▇██▇████▇▆▇▆▇▅▆▅▆▅▆▄▆▅ █
-  131 μs        Histogram: log(frequency) by time        218 μs <
+  █   █  █ █ ██        █    █                      █          █  
+  █▁▁▁█▁▁█▁█▁██▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁█ ▁
+  491 ms           Histogram: frequency by time          544 ms <
 
  Memory estimate: 141.44 KiB, allocs estimate: 34.
-
 ```

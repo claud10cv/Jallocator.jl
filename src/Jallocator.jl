@@ -1,8 +1,8 @@
 module Jallocator
     using StrideArrays, StrideArraysCore
-    import Base.zero, Base.empty!
+    import Base.empty!
     include("struct.jl")
     include("alloc.jl")
     export allocator, new_ptr!, delete_ptr!, copy_ptr!, empty!
-    export JAPtr
+    export JAPtr, JAAddr
 end # module Jallocator
