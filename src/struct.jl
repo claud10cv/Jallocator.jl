@@ -11,6 +11,8 @@ mutable struct JAPtr{T}
     addr::JAAddr
 end
 
+(==)(x::JAPtr{T}, y::JAPtr{T}) where T = x.obj == y.obj && x.addr == y.addr
+
 JAPtrVector{T} = StaticVector{LVSIZE, JAPtr{T}}
 
 mutable struct Allocator{T}
